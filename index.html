@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌸 Secret Exchange 🌸</title>
+    <title>🌸 Flower Exchange 🌸</title>
     <style>
         * { box-sizing: border-box; }
         
@@ -18,6 +18,7 @@
             min-height: 100vh;
             margin: 0;
             padding: 20px;
+            text-align: center;
         }
 
         h1 {
@@ -25,35 +26,27 @@
             text-shadow: 3px 3px 0px #FFF, 5px 5px 0px #FFB6C1;
             font-size: 2.5rem;
             margin-bottom: 20px;
-            text-align: center;
         }
 
         .card {
             background-color: #FFFFFF;
             border: 4px solid #333;
             border-radius: 20px;
-            padding: 40px 30px;
+            padding: 30px;
             width: 100%;
             max-width: 450px;
             box-shadow: 8px 8px 0px #FFB6C1;
-            text-align: center;
-            display: none; /* Hidden by default */
+            display: none; 
             flex-direction: column;
-            gap: 20px;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            gap: 15px;
+            animation: popIn 0.4s ease-out;
         }
 
-        .card.active {
-            display: flex;
-        }
+        .card.active { display: flex; }
 
-        p {
-            font-size: 1.1rem;
-            margin: 0;
-            font-weight: bold;
-        }
+        p { font-size: 1.1rem; margin: 0; font-weight: bold; }
 
-        input[type="text"], input[type="password"] {
+        input {
             padding: 15px;
             border: 3px solid #333;
             border-radius: 12px;
@@ -83,6 +76,8 @@
             transform: translate(4px, 4px);
         }
 
+        button:disabled { background-color: #d3d3d3 !important; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
+
         .btn-green { background-color: #98FB98; }
         .btn-yellow { background-color: #FFD700; }
         .btn-pink { background-color: #FF69B4; color: white; }
@@ -105,10 +100,15 @@
             user-select: all;
         }
 
-        .error-msg {
-            color: red;
-            font-size: 0.9rem;
-            display: none;
+        .error-msg { color: red; font-size: 0.9rem; display: none; }
+
+        #secret-trigger {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.2;
         }
 
         @keyframes popIn {
@@ -126,102 +126,160 @@
 
     <h1>🌸 Flower Exchange 🌸</h1>
 
-    <div class="card" id="setup-card">
-        <p>🛠️ Organizer Setup 🛠️</p>
-        <p style="font-size: 0.9rem; color: #666;">Type all the nicknames separated by commas (e.g., Kk, Kaylee, Neke)</p>
-        <input type="text" id="names-input" placeholder="Kk, Kaylee, Neke">
-        <button class="btn-yellow" onclick="generateLink()">🪄 Shuffle & Create Magic Link!</button>
+    <div class="card" id="join-card">
+        <p>Join the pool! 🌻</p>
+        <input type="text" id="join-name" placeholder="Your Secret Nickname">
+        <button class="btn-green" id="join-btn" onclick="joinPool()">Add Me! ✨</button>
+    </div>
+
+    <div class="card" id="success-card">
+        <p>🎉 You are in! 🎉</p>
+        <p style="font-size: 0.9rem; color: #666; font-weight: normal;">Wait for the organizer to shuffle the names and send the magic link in the group chat.</p>
+    </div>
+
+    <div class="card" id="organizer-card" style="border-color: #FF0000;">
+        <p>🚨 MASTER CONTROLS 🚨</p>
+        <p style="font-size: 0.9rem;">Fetch names from Google Sheets and generate the link!</p>
+        <button class="btn-yellow" id="fetch-btn" onclick="fetchAndShuffle()">🎲 Fetch & Shuffle 🎲</button>
         
-        <div id="link-container" style="display: none; flex-direction: column; gap: 10px;">
-            <p style="color: #32CD32;">✅ Success! Send this link to the group chat:</p>
+        <div id="link-container" style="display: none; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <p style="color: #32CD32;">✅ Locked! Send this to the group:</p>
             <div class="link-box" id="magic-link"></div>
             <button class="btn-pink" onclick="copyLink()">📋 Copy Link</button>
         </div>
     </div>
 
     <div class="card" id="login-card">
-        <p>Enter your secret code (nickname) to reveal your match! 🤫</p>
-        <input type="password" id="secret-code" placeholder="Type nickname here...">
-        <p class="error-msg" id="error-msg">Oops! That code isn't in the system. Check your spelling! 🧐</p>
+        <p>The names have been drawn! 🤫</p>
+        <p>Enter your secret nickname to reveal your match:</p>
+        <input type="password" id="secret-code" placeholder="Type your nickname here...">
+        <p class="error-msg" id="error-msg">Oops! Name not found. Check your spelling! 🧐</p>
         <button class="btn-green" onclick="revealMatch()">Unlock Reveal 🗝️</button>
     </div>
 
     <div class="card" id="reveal-card">
         <p>Shh! Keep it a secret...</p>
-        <p>You are giving flowers to:</p>
+        <p>You will be giving flowers to:</p>
         <div class="reveal-text" id="match-name">???</div>
-        <button class="btn-pink" onclick="resetApp()">Lock it back up 🔒</button>
     </div>
 
+    <div id="secret-trigger" onclick="revealOrganizer()">🌸</div>
+
     <script>
+        // --- 🔴 YOUR GOOGLE WEB APP URL 🔴 ---
+        const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbzVy9TkpQzcUiJZaae3sDBcS7NQFNYqrMRm6Q0r4RbStVvm031cWT1HDaeYsJQKV5Ke/exec";
+        
         let secretMap = {};
 
-        // 1. Check if we have data in the URL
+        // INITIALIZATION
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
 
             if (encodedData) {
-                // If the link has encrypted data, they are a participant! Show Login.
+                document.getElementById('secret-trigger').style.display = 'none';
                 try {
-                    // Decrypt the data (Base64 -> JSON)
                     secretMap = JSON.parse(atob(encodedData));
                     document.getElementById('login-card').classList.add('active');
                 } catch (e) {
-                    alert("Oh no! This magic link is broken. Ask the organizer for a new one.");
+                    alert("Oh no! This magic link is broken.");
                 }
             } else {
-                // If there is no data in the URL, you are the organizer setting it up!
-                document.getElementById('setup-card').classList.add('active');
+                document.getElementById('join-card').classList.add('active');
             }
         };
 
-        // 2. Organizer: Generate the Magic Link
-        function generateLink() {
-            const input = document.getElementById('names-input').value;
-            // Clean up the names (remove spaces, make an array)
-            const friends = input.split(',').map(name => name.trim()).filter(name => name !== "");
+        // --- USER JOINS DATABASE ---
+        function joinPool() {
+            const name = document.getElementById('join-name').value.trim();
 
-            if (friends.length < 3) {
-                alert("You need at least 3 friends for a proper exchange! 🌱");
+            if (!name) {
+                alert("Please enter a nickname! 🥺");
                 return;
             }
 
-            // Shuffle until no one has themselves
-            let receivers = [...friends];
-            let validDraw = false;
-            while (!validDraw) {
-                receivers.sort(() => Math.random() - 0.5);
-                validDraw = receivers.every((receiver, index) => receiver !== friends[index]);
-            }
+            const btn = document.getElementById('join-btn');
+            btn.innerText = "Sending... 🕊️";
+            btn.disabled = true;
 
-            // Create the map (e.g., "kk" : "Kaylee")
-            let matchMap = {};
-            for (let i = 0; i < friends.length; i++) {
-                let giverCode = friends[i].toLowerCase(); // Lowercase so logins are not case-sensitive
-                matchMap[giverCode] = receivers[i];
-            }
+            const formData = new URLSearchParams();
+            formData.append('name', name);
 
-            // Encrypt the map to Base64
-            const encodedString = btoa(JSON.stringify(matchMap));
-            
-            // Build the final Magic Link
-            const baseUrl = window.location.href.split('?')[0]; // Gets the current website URL
-            const magicLink = baseUrl + "?data=" + encodedString;
-
-            // Show it on the screen
-            document.getElementById('magic-link').innerText = magicLink;
-            document.getElementById('link-container').style.display = 'flex';
+            fetch(GOOGLE_APP_URL, {
+                method: "POST",
+                body: formData,
+                mode: "no-cors" 
+            }).then(() => {
+                document.getElementById('join-card').classList.remove('active');
+                document.getElementById('success-card').classList.add('active');
+            }).catch(error => {
+                alert("Oh no! Check your internet connection.");
+                btn.innerText = "Add Me! ✨";
+                btn.disabled = false;
+            });
         }
 
-        // Helper to copy the link
+        // --- ORGANIZER CONTROLS ---
+        function revealOrganizer() {
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            document.getElementById('organizer-card').classList.add('active');
+        }
+
+        function fetchAndShuffle() {
+            const btn = document.getElementById('fetch-btn');
+            btn.innerText = "Fetching names... 🪄";
+            btn.disabled = true;
+
+            fetch(GOOGLE_APP_URL)
+                .then(response => response.json())
+                .then(friendsPool => {
+                    
+                    if (friendsPool.length < 3) {
+                        alert(`Not enough people! Only ${friendsPool.length} have joined so far. 🌱`);
+                        btn.innerText = "🎲 Fetch & Shuffle 🎲";
+                        btn.disabled = false;
+                        return;
+                    }
+
+                    // Derangement Shuffle
+                    let receivers = [...friendsPool];
+                    let validDraw = false;
+                    while (!validDraw) {
+                        receivers.sort(() => Math.random() - 0.5);
+                        validDraw = receivers.every((receiver, index) => receiver !== friendsPool[index]);
+                    }
+
+                    // Map Giver -> Receiver (Lowercase for easy checking)
+                    let matchMap = {};
+                    for (let i = 0; i < friendsPool.length; i++) {
+                        let giverCode = friendsPool[i].toLowerCase().trim();
+                        matchMap[giverCode] = receivers[i].trim();
+                    }
+
+                    // Encrypt to Base64 and build Magic Link
+                    const encodedString = btoa(JSON.stringify(matchMap));
+                    const baseUrl = window.location.href.split('?')[0]; 
+                    const magicLink = baseUrl + "?data=" + encodedString;
+
+                    // Display the link
+                    document.getElementById('magic-link').innerText = magicLink;
+                    document.getElementById('link-container').style.display = 'flex';
+                    btn.innerText = "✅ Names Shuffled!";
+                })
+                .catch(error => {
+                    alert("Error fetching names. Check connection or URL.");
+                    btn.innerText = "Try Again ❌";
+                    btn.disabled = false;
+                });
+        }
+
         function copyLink() {
             const linkText = document.getElementById('magic-link').innerText;
             navigator.clipboard.writeText(linkText);
-            alert("Link copied! Now paste it in your group chat (and don't forget to click it yourself). 🌸");
+            alert("Link copied! Paste it in the group chat so everyone can discover their match! 🌸");
         }
 
-        // 3. Participant: Reveal Match
+        // --- REVEAL PHASE Logic ---
         function revealMatch() {
             const inputCode = document.getElementById('secret-code').value.trim().toLowerCase();
             const errorMsg = document.getElementById('error-msg');
@@ -236,13 +294,6 @@
                 errorMsg.style.display = 'block';
                 document.getElementById('secret-code').value = ''; 
             }
-        }
-
-        // Reset so someone else can use the same phone if needed
-        function resetApp() {
-            document.getElementById('secret-code').value = '';
-            document.getElementById('reveal-card').classList.remove('active');
-            document.getElementById('login-card').classList.add('active');
         }
     </script>
 </body>
