@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Flower Exchange 🌸</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <style>
+        /* 🌷 FUN, SOLID-COLOR AESTHETIC 🌷 */
+        * {
+            box-sizing: border-box; /* This keeps everything inside the container! */
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Fredoka One', cursive, sans-serif;
+            background-color: #FFF0F5; /* Lavender Blush */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #FF69B4;
+            text-shadow: 3px 3px 0px #FFF, 5px 5px 0px #FFB6C1;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            background-color: #FFFFFF;
+            border: 4px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 8px 8px 0px #FFB6C1;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap; /* Lets the button wrap if space is tight */
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        input {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            border: 3px solid #333;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            background-color: #F0F8FF;
+            transition: transform 0.1s;
+        }
+
+        input:focus {
+            outline: none;
+            background-color: #E6E6FA;
+            transform: scale(1.02);
+        }
+
+        button {
+            padding: 12px 20px;
+            border: 3px solid #333;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #333;
+            transition: all 0.1s;
+        }
+
+        button:active {
+            box-shadow: 0px 0px 0px #333;
+            transform: translate(4px, 4px);
+        }
+
+        #add-btn {
+            background-color: #98FB98; /* Pale Green */
+            flex-grow: 1; /* Helps it fill remaining space nicely */
+        }
+
+        #draw-btn {
+            background-color: #FFD700; /* Gold */
+            width: 100%;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            padding: 15px;
+        }
+
+        .friend-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .friend-item {
+            background-color: #FFE4E1;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: popIn 0.3s ease-out;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background-color: #FF6347; /* Tomato */
+            color: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 5px 10px;
+            box-shadow: 2px 2px 0px #333;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #FF1493;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🌸 Flower Exchange 🌸</h1>
+    
+    <div class="container">
+        <div class="input-group">
+            <input type="text" id="name" placeholder="Friend's Name 🌻">
+            <input type="email" id="email" placeholder="Email Address 💌">
+            <button id="add-btn">Add ✨</button>
+        </div>
+
+        <ul class="friend-list" id="friend-list">
+            </ul>
+
+        <button id="draw-btn">🎲 Draw Names & Send Secrets! 🎲</button>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        // --- 🔴 YOUR EMAILJS CONFIGURATION 🔴 ---
+        const EMAILJS_PUBLIC_KEY = "03hX9G9Y1yYFVBxQs";
+        const EMAILJS_SERVICE_ID = "service_rv8i7nk";
+        const EMAILJS_TEMPLATE_ID = "template_q1u6xv4";
+
+        // Initialize EmailJS
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+
+        let friends = [];
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const friendList = document.getElementById('friend-list');
+        const statusDiv = document.getElementById('status');
+
+        // Add Friend Logic
+        document.getElementById('add-btn').addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+
+            if (name && email) {
+                friends.push({ name, email });
+                updateUI();
+                nameInput.value = '';
+                emailInput.value = '';
+                nameInput.focus();
+            } else {
+                alert("Please fill in both name and email! 🥺");
+            }
+        });
+
+        // Delete Friend Logic
+        function removeFriend(index) {
+            friends.splice(index, 1);
+            updateUI();
+        }
+
+        // Update the visual list
+        function updateUI() {
+            friendList.innerHTML = '';
+            friends.forEach((friend, index) => {
+                const li = document.createElement('li');
+                li.className = 'friend-item';
+                li.innerHTML = `
+                    <span>${friend.name} (${friend.email})</span>
+                    <button class="delete-btn" onclick="removeFriend(${index})">X</button>
+                `;
+                friendList.appendChild(li);
+            });
+        }
+
+        // The Magic Draw Logic
+        document.getElementById('draw-btn').addEventListener('click', () => {
+            if (friends.length < 3) {
+                alert("You need at least 3 friends for a proper exchange! 🌱");
+                return;
+            }
+
+            statusDiv.innerText = "Shuffling names... 🪄";
+            
+            // Generate a valid "Derangement" (no one gets themselves)
+            let receivers = [...friends];
+            let validDraw = false;
+            
+            while (!validDraw) {
+                // Shuffle array
+                receivers.sort(() => Math.random() - 0.5);
+                // Check if anyone has themselves
+                validDraw = receivers.every((receiver, index) => receiver.name !== friends[index].name);
+            }
+
+            // Send Emails via EmailJS
+            statusDiv.innerText = "Sending secret emails... 💌";
+            
+            let promises = friends.map((giver, index) => {
+                const receiver = receivers[index];
+                
+                // These keys MUST match the {{variables}} in your EmailJS template!
+                const templateParams = {
+                    giver_name: giver.name,
+                    receiver_name: receiver.name,
+                    to_email: giver.email
+                };
+
+                return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+            });
+
+            Promise.all(promises)
+                .then(() => {
+                    statusDiv.innerText = "✨ All emails sent successfully! ✨";
+                    statusDiv.style.color = "#32CD32"; // Success green
+                })
+                .catch((error) => {
+                    console.error("FAILED...", error);
+                    statusDiv.innerText = "❌ Oops! Something went wrong. Check console.";
+                    statusDiv.style.color = "red";
+                });
+        });
+    </script>
+</body>
+</html>
