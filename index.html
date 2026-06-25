@@ -317,11 +317,13 @@
 
                     let matchMap = {};
                     for (let i = 0; i < funnyNamesPool.length; i++) {
-                        // Create easy login keywords: "potato", "ninja", "chicken"
+                        // FIX: Ensure the string being checked is fully lowercase so it matches exactly 
+                        let currentName = funnyNamesPool[i].toLowerCase();
                         let keyword = "";
-                        if(funnyNamesPool[i].includes("Gialmoranas")) keyword = "Gialmoranas";
-                        if(funnyNamesPool[i].includes("Nakaigit")) keyword = "Nakaigit";
-                        if(funnyNamesPool[i].includes("Nakaihi")) keyword = "Nakaihi";
+                        
+                        if(currentName.includes("gialmoranas")) keyword = "gialmoranas";
+                        if(currentName.includes("nakaigit")) keyword = "nakaigit";
+                        if(currentName.includes("nakaihi")) keyword = "nakaihi";
                         
                         matchMap[keyword] = receivers[i];
                     }
@@ -343,6 +345,7 @@
 
         // --- REVEAL PHASE ---
         function verifyIdentity() {
+            // Converts input to lowercase to safely match the keys
             const inputCode = document.getElementById('secret-code').value.trim().toLowerCase();
             const errorMsg = document.getElementById('error-msg');
 
