@@ -78,7 +78,7 @@
         .btn-yellow { background-color: #FFD700; }
         .btn-pink { background-color: #FF69B4; color: white; }
 
-        /* --- 3D FLIPPING CARDS CSS --- */
+        /* --- 3D FLIPPING CARDS --- */
         .card-deck {
             display: flex;
             justify-content: center;
@@ -121,16 +121,17 @@
         }
 
         .flip-card-front {
-            background-color: #87CEFA;
+            background-color: #87CEFA; /* Sky Blue */
             font-size: 3rem;
             color: white;
             text-shadow: 2px 2px 0px #333;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.2) 10px, rgba(255,255,255,0.2) 20px);
         }
 
         .flip-card-back {
-            background-color: #FFE4E1;
+            background-color: #FFE4E1; /* Misty Rose */
             transform: rotateY(180deg);
-            font-size: 1.1rem;
+            font-size: 1rem;
             flex-direction: column;
             padding: 5px;
             color: #FF1493;
@@ -145,17 +146,11 @@
 </head>
 <body>
 
-    <h1>🌸 Identity Exchange 🌸</h1>
-
-    <div class="card-panel" id="step-name">
-        <p>Asnik ka et? 🌻</p>
-        <input type="text" id="real-name" placeholder="Suwat ari et...">
-        <button class="btn-green" onclick="goToCardPick()">Next ➡️</button>
-    </div>
+    <h1>🌸 Flower Exchange 🌸</h1>
 
     <div class="card-panel" id="step-pick-id">
-        <p>Fele ka kung whoables are you.</p>
-        <p id="loading-msg" style="color: #FF69B4; font-size: 0.9rem; display: none;">Drawing card from the deck... 🪄</p>
+        <p>Fele ka kung asnik ikawww...🤫</p>
+        <p id="loading-msg" style="color: #FF69B4; font-size: 0.9rem; display: none;">Drawing card from the deckavility... 🪄</p>
         
         <div class="card-deck">
             <div class="flip-card" id="id-card-1" onclick="assignIdentity(1)">
@@ -179,8 +174,8 @@
         </div>
         
         <div id="wait-msg" style="display: none; margin-top: 15px;">
-            <p style="color: #32CD32;">✅ HAHAHAHAHAHAHAHAHA</p>
-            <p style="font-size: 0.9rem; color: #666;">Remember ni haa. Nya muchat rako for the new link.</p>
+            <p style="color: #32CD32;">✅ HAHAHAHAHAHAHAHHA ikaw na et.</p>
+            <p style="font-size: 0.9rem; color: #666;">Remember ni haaa nya waait sa new link sa gc ako ichat.</p>
         </div>
     </div>
 
@@ -197,8 +192,8 @@
 
     <div class="card-panel" id="step-login">
         <p>The names have been drawn! 🤫</p>
-        <p>Type your secret keyword (Potato, Ninja, or Chicken):</p>
-        <input type="password" id="secret-code" placeholder="Your identity keyword...">
+        <p>Type your secret keyword (Potato, Ninja, or Chicken) to enter:</p>
+        <input type="password" id="secret-code" placeholder="Your keyword...">
         <p class="error-msg" id="error-msg">Oops! Keyword not found.</p>
         <button class="btn-green" onclick="verifyIdentity()">Enter Secret Portal 🗝️</button>
     </div>
@@ -231,13 +226,14 @@
     <div id="secret-trigger" onclick="showOrganizer()">🌸</div>
 
     <script>
-        // --- 🔴 YOUR GOOGLE WEB APP URL HERE 🔴 ---
+        // --- 🔴 YOUR GOOGLE WEB APP URL ---
         const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycbzVy9TkpQzcUiJZaae3sDBcS7NQFNYqrMRm6Q0r4RbStVvm031cWT1HDaeYsJQKV5Ke/exec";
         
         let secretMap = {};
         let myPreCalculatedMatch = "";
         let hasFlipped = false;
 
+        // Determine which screen to show based on the URL
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
@@ -247,7 +243,7 @@
                 secretMap = JSON.parse(atob(encodedData));
                 showPanel('step-login');
             } else {
-                showPanel('step-name');
+                showPanel('step-pick-id');
             }
         };
 
@@ -256,24 +252,14 @@
             document.getElementById(panelId).classList.add('active');
         }
 
-        function goToCardPick() {
-            const name = document.getElementById('real-name').value.trim();
-            if(!name) { alert("Please enter your real name first!"); return; }
-            showPanel('step-pick-id');
-        }
-
         // --- FETCH IDENTITY FROM GOOGLE SHEETS ---
         function assignIdentity(cardNumber) {
-            if(hasFlipped) return; // Prevent clicking multiple cards
+            if(hasFlipped) return; // Stop them from clicking multiple cards
             hasFlipped = true;
 
-            const name = document.getElementById('real-name').value.trim();
             document.getElementById('loading-msg').style.display = 'block';
 
-            // We use standard fetch GET request to avoid CORS issues!
-            const requestUrl = GOOGLE_APP_URL + "?action=join&realName=" + encodeURIComponent(name);
-
-            fetch(requestUrl)
+            fetch(GOOGLE_APP_URL + "?action=draw")
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('loading-msg').style.display = 'none';
@@ -297,7 +283,7 @@
                     document.getElementById('wait-msg').style.display = 'block';
                 })
                 .catch(err => {
-                    alert("Error connecting to database.");
+                    alert("Error connecting to database. Please check your connection.");
                     hasFlipped = false;
                     document.getElementById('loading-msg').style.display = 'none';
                 });
@@ -315,12 +301,13 @@
                 .then(res => res.json())
                 .then(funnyNamesPool => {
                     if (funnyNamesPool.length < 3) {
-                        alert(`Only ${funnyNamesPool.length} people have picked cards so far!`);
+                        alert(`Waiting for everyone! Only ${funnyNamesPool.length} people have picked cards so far.`);
                         btn.innerText = "🎲 Fetch Identities & Generate Link 🎲";
                         btn.disabled = false;
                         return;
                     }
 
+                    // Derangement Shuffle
                     let receivers = [...funnyNamesPool];
                     let validDraw = false;
                     while (!validDraw) {
@@ -356,14 +343,13 @@
 
         // --- REVEAL PHASE ---
         function verifyIdentity() {
-            // User types "potato", "chicken", or "ninja"
             const inputCode = document.getElementById('secret-code').value.trim().toLowerCase();
             const errorMsg = document.getElementById('error-msg');
 
             if (secretMap[inputCode]) {
                 errorMsg.style.display = 'none';
                 myPreCalculatedMatch = secretMap[inputCode];
-                hasFlipped = false; // Reset for the second card pick
+                hasFlipped = false; // Reset the flip lock for the second card pick
                 showPanel('step-reveal');
             } else {
                 errorMsg.style.display = 'block';
@@ -374,7 +360,7 @@
             if(hasFlipped) return;
             hasFlipped = true;
 
-            // Put their pre-calculated match on whichever card they happen to click
+            // Put their pre-calculated match on whichever card they happen to click!
             document.getElementById(`match-back-${cardNumber}`).innerText = myPreCalculatedMatch;
             
             // Flip it
