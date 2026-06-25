@@ -135,6 +135,7 @@
             flex-direction: column;
             padding: 5px;
             color: #FF1493;
+            word-wrap: break-word;
         }
 
         .link-box { font-size: 0.9rem; padding: 15px; background-color: #E6E6FA; border: 2px dashed #333; border-radius: 10px; word-break: break-all; user-select: all; }
@@ -233,7 +234,6 @@
         let myPreCalculatedMatch = "";
         let hasFlipped = false;
 
-        // Determine which screen to show based on the URL
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('data');
@@ -254,7 +254,7 @@
 
         // --- FETCH IDENTITY FROM GOOGLE SHEETS ---
         function assignIdentity(cardNumber) {
-            if(hasFlipped) return; // Stop them from clicking multiple cards
+            if(hasFlipped) return; 
             hasFlipped = true;
 
             document.getElementById('loading-msg').style.display = 'block';
@@ -269,13 +269,9 @@
                         return;
                     }
 
-                    // Put the funny name on the back of the card they clicked
                     document.getElementById(`id-back-${cardNumber}`).innerText = data.nickname;
-                    
-                    // Flip the card they clicked
                     document.getElementById(`id-card-${cardNumber}`).classList.add('flipped');
                     
-                    // Hide the other two cards
                     [1,2,3].forEach(num => {
                         if(num !== cardNumber) document.getElementById(`id-card-${num}`).classList.add('hidden');
                     });
@@ -317,14 +313,8 @@
 
                     let matchMap = {};
                     for (let i = 0; i < funnyNamesPool.length; i++) {
-                        // FIX: Ensure the string being checked is fully lowercase so it matches exactly 
-                        let currentName = funnyNamesPool[i].toLowerCase();
-                        let keyword = "";
-                        
-                        if(currentName.includes("gialmoranas")) keyword = "gialmoranas";
-                        if(currentName.includes("nakaigit")) keyword = "nakaigit";
-                        if(currentName.includes("nakaihi")) keyword = "nakaihi";
-                        
+                        // The INVINCIBLE MAPPING: Converts whatever name is in the sheet to lowercase to use as the password
+                        let keyword = funnyNamesPool[i].trim().toLowerCase();
                         matchMap[keyword] = receivers[i];
                     }
 
@@ -345,14 +335,13 @@
 
         // --- REVEAL PHASE ---
         function verifyIdentity() {
-            // Converts input to lowercase to safely match the keys
             const inputCode = document.getElementById('secret-code').value.trim().toLowerCase();
             const errorMsg = document.getElementById('error-msg');
 
             if (secretMap[inputCode]) {
                 errorMsg.style.display = 'none';
                 myPreCalculatedMatch = secretMap[inputCode];
-                hasFlipped = false; // Reset the flip lock for the second card pick
+                hasFlipped = false; 
                 showPanel('step-reveal');
             } else {
                 errorMsg.style.display = 'block';
@@ -363,13 +352,9 @@
             if(hasFlipped) return;
             hasFlipped = true;
 
-            // Put their pre-calculated match on whichever card they happen to click!
             document.getElementById(`match-back-${cardNumber}`).innerText = myPreCalculatedMatch;
-            
-            // Flip it
             document.getElementById(`match-card-${cardNumber}`).classList.add('flipped');
 
-            // Fade out the ones they didn't pick
             [1,2,3].forEach(num => {
                 if(num !== cardNumber) document.getElementById(`match-card-${num}`).classList.add('hidden');
             });
